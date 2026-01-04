@@ -1,0 +1,7 @@
+livekit-agents
+livekit-plugins-cartesia
+livekit-plugins-deepgram
+google-generativeai
+python-dotenv
+colorama
+
