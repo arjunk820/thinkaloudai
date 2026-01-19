@@ -1,0 +1,14 @@
+{
+  "name": "thinkaloud-ai",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter frontend dev",
+    "build": "pnpm --filter frontend build",
+    "start": "pnpm --filter frontend start",
+    "lint": "pnpm --filter frontend lint"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,126 +1,136 @@
 # ThinkAloud AI
 
-A voice-first learning companion that listens to students explain their reasoning in real-time. Powered by Google Gemini, LiveKit, and Cartesia.
+A voice-first learning companion that listens to students explain their reasoning in real-time, catches logical gaps through Socratic questioning, and helps them discover answers themselves.
 
-## Project Structure
+## Architecture
 
-- `/agent` - Python backend for LiveKit Agent
-- `/frontend` - Next.js application
+- **Frontend**: Next.js 14 + React 18 + Tailwind CSS
+- **Agent**: Python with LiveKit Agents SDK v1.x
+- **Speech-to-Text**: Deepgram
+- **LLM**: Google Gemini 2.0 Flash
+- **Text-to-Speech**: Cartesia
 
 ## Prerequisites
 
-- **Node.js** (v18 or higher) and **pnpm**
-- **Python** 3.10 or higher
-- API keys for LiveKit, Google Gemini, Cartesia, and Deepgram
+- Node.js 18+ and pnpm
+- Python 3.9–3.13 (3.14 not supported yet)
+- API keys for:
+  - [LiveKit Cloud](https://cloud.livekit.io/) (LIVEKIT_URL, API_KEY, API_SECRET)
+  - [Google AI Studio](https://aistudio.google.com/) (GOOGLE_API_KEY)
+  - [Deepgram](https://deepgram.com/) (DEEPGRAM_API_KEY)
+  - [Cartesia](https://cartesia.ai/) (CARTESIA_API_KEY)
 
 ## Setup
 
-### Frontend
+### 1. Environment Variables
 
-1. Install pnpm globally (if not already installed):
-   ```bash
-   npm install -g pnpm
-   ```
+Copy `.env.example` to `.env` and fill in your API keys:
 
-2. Install dependencies:
-   ```bash
-   # From the project root
-   pnpm install
-   
-   # OR from the frontend directory
-   cd frontend
-   pnpm install
-   ```
+```bash
+cp .env.example .env
+```
 
-3. Run the development server:
-   ```bash
-   # From the project root (recommended)
-   pnpm dev
-   
-   # OR from the frontend directory
-   cd frontend
-   pnpm dev
-   ```
+Required variables:
+```
+LIVEKIT_URL=wss://your-project.livekit.cloud
+LIVEKIT_API_KEY=your-api-key
+LIVEKIT_API_SECRET=your-api-secret
+GOOGLE_API_KEY=your-gemini-key
+DEEPGRAM_API_KEY=your-deepgram-key
+CARTESIA_API_KEY=your-cartesia-key
+```
 
-   The app will be available at `http://localhost:3000`
+### 2. Frontend Setup
 
-### Agent
+```bash
+# Install dependencies (from project root)
+pnpm install
 
-1. Navigate to the agent directory:
-   ```bash
-   cd agent
-   ```
+# Run development server
+pnpm dev
+```
 
-2. Create a virtual environment:
-   ```bash
-   python3 -m venv .venv
-   ```
+The frontend will be available at http://localhost:3000
 
-3. Activate the virtual environment:
-   ```bash
-   # On macOS/Linux:
-   source .venv/bin/activate
-   
-   # On Windows:
-   .venv\Scripts\activate
-   ```
+### 3. Agent Setup
 
-4. Verify you're using the venv Python:
-   ```bash
-   # Should show path to .venv/bin/python3
-   which python3
-   ```
+```bash
+# Navigate to agent directory
+cd agent
 
-5. Install dependencies:
-   ```bash
-   # Use the venv's pip explicitly
-   python3 -m pip install -r requirements.txt
-   
-   # OR if pip is available in venv:
-   pip install -r requirements.txt
-   ```
+# Create virtual environment
+python3 -m venv .venv
 
-6. Set up environment variables (see Configuration section below)
+# Activate virtual environment
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-7. Run the agent:
-   ```bash
-   python3 main.py
-   ```
+# Install dependencies
+pip install -r requirements.txt
 
-## Configuration
+# Run the agent
+python main.py dev
+```
 
-1. Copy `.env.example` to `.env` in the project root:
-   ```bash
-   cp .env.example .env
-   ```
+## Usage
 
-2. Fill in your API keys in the `.env` file:
-   - `LIVEKIT_URL` - Your LiveKit server URL (e.g., `wss://your-project.livekit.cloud`)
-   - `LIVEKIT_API_KEY` - LiveKit API key
-   - `LIVEKIT_API_SECRET` - LiveKit API secret
-   - `GOOGLE_API_KEY` - Google Gemini API key
-   - `CARTESIA_API_KEY` - Cartesia API key for text-to-speech
-   - `DEEPGRAM_API_KEY` - Deepgram API key for speech-to-text
+1. Start both the frontend (`pnpm dev`) and agent (`python main.py dev`)
+2. Open http://localhost:3000 in your browser
+3. Click "Start Learning Session"
+4. Allow microphone access when prompted
+5. Wait for the AI tutor to connect
+6. Start explaining your reasoning out loud!
 
-3. Verify your environment variables are loaded:
-   ```bash
-   cd agent
-   source .venv/bin/activate
-   python3 main.py
-   ```
-   
-   The agent will check and report any missing environment variables.
+## How It Works
+
+1. You speak into your microphone
+2. Audio streams to LiveKit Cloud via WebRTC
+3. The Python agent receives audio and transcribes it using Deepgram
+4. Your words are sent to Gemini with a Socratic tutor prompt
+5. Gemini's response is converted to speech using Cartesia
+6. You hear the AI tutor's response through your speakers
+
+## Development
+
+### Project Structure
+
+```
+thinkaloudai/
+├── frontend/           # Next.js application
+│   ├── app/           # App router pages and API routes
+│   └── components/    # React components
+├── agent/             # Python LiveKit agent
+│   ├── main.py       # Agent entrypoint
+│   └── requirements.txt
+├── .env               # Environment variables (not in git)
+└── .env.example       # Template for environment variables
+```
+
+### Useful Commands
+
+```bash
+# Frontend
+pnpm dev          # Start development server
+pnpm build        # Build for production
+pnpm lint         # Run ESLint
+
+# Agent
+python main.py dev      # Run in development mode
+python main.py start    # Run in production mode
+```
 
 ## Troubleshooting
 
-### Frontend Issues
+### "Waiting for AI tutor to join..."
+- Make sure the Python agent is running (`python main.py dev`)
+- Check that your LiveKit credentials are correct
+- Verify the agent connected by checking its console output
 
-- **"node_modules missing"**: Run `pnpm install` to install dependencies
-- **"next: command not found"**: Make sure dependencies are installed with `pnpm install`
+### Agent won't start
+- Ensure you're using Python 3.9–3.13 (not 3.14)
+- Make sure the virtual environment is activated
+- Check that all dependencies installed successfully
 
-### Agent Issues
-
-- **"externally-managed-environment" error**: Ensure the virtual environment is activated and you're using `python3 -m pip` or the venv's pip
-- **"ModuleNotFoundError"**: Make sure dependencies are installed in the virtual environment, not globally
-- **"pip: command not found"**: Use `python3 -m pip` instead, or ensure the venv is activated
-
+### No audio
+- Check browser microphone permissions
+- Ensure your microphone is working
+- Try refreshing the page
