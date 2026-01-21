@@ -50,8 +50,8 @@ class SocraticTutor(Agent):
         # Get response from Gemini
         response = await self._get_gemini_response(user_text)
 
-        # Queue the response for TTS
-        turn_ctx.response_text = response
+        # Queue the response for TTS - use session.say() (provided by Agent base class)
+        await self.session.say(response)
 
     async def _get_gemini_response(self, user_message: str) -> str:
         """Get a Socratic response from Gemini."""
@@ -62,8 +62,9 @@ class SocraticTutor(Agent):
             # Build contents with system instruction and history
             contents = [{"role": "user", "parts": [{"text": SYSTEM_PROMPT}]}] + self.conversation_history
             
-            response = self.client.models.generate_content(
-                model="gemini-2.0-flash",
+            # Use async API call with faster model (lite version for real-time voice)
+            response = await self.client.aio.models.generate_content(
+                model="gemini-2.5-flash-lite",
                 contents=contents,
             )
             
@@ -93,7 +94,7 @@ async def entrypoint(ctx: agents.JobContext):
         ),
         tts=cartesia.TTS(
             model="sonic-2",
-            voice="d46abd1d-2f1b-4e60-9e66-8f205d4c8ea3",  # Friendly, warm voice
+            voice="a0e99841-438c-4a64-b679-ae501e7d6091",  # barbershop voice
         ),
         vad=silero.VAD.load(),
     )
@@ -107,16 +108,6 @@ async def entrypoint(ctx: agents.JobContext):
             audio_enabled=True,
         ),
     )
-
-    # Note: Initial greeting is commented out due to known TTS issue in LiveKit Agents 1.1.0+
-    # See: https://github.com/livekit/agents/issues/3306
-    # The agent will still respond to user messages via on_user_turn_completed
-    # Uncomment below once TTS issue is resolved or after downgrading to livekit-agents==1.0.23
-    #
-    # await session.say(
-    #     "Hello! I'm ThinkAloud AI, your Socratic learning companion. What are you working on today?",
-    #     allow_interruptions=False
-    # )
 
 
 if __name__ == "__main__":
