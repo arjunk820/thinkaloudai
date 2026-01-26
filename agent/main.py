@@ -1,10 +1,12 @@
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv # pyright: ignore[reportMissingImports]
 
-from livekit import agents
-from livekit.agents import AgentSession, Agent, RoomInputOptions
-from livekit.plugins import deepgram, cartesia, silero
+from livekit import agents  # pyright: ignore[reportMissingImports]
+from livekit.agents import AgentSession, Agent, RoomInputOptions  # pyright: ignore[reportMissingImports]
+from livekit.plugins import deepgram, cartesia, silero  # pyright: ignore[reportMissingImports]
 from google import genai
+
+import json
 
 # Load environment variables from .env file in project root
 load_dotenv(dotenv_path="../.env")
@@ -29,7 +31,7 @@ Remember: Your goal is to develop the student's thinking skills, not to solve pr
 
 
 class SocraticTutor(Agent):
-    """A Socratic tutor agent that helps students learn through questioning."""
+    """A Socratic tutor agent that helps students learn through questioning and conversation."""
 
     def __init__(self) -> None:
         super().__init__(
@@ -38,48 +40,77 @@ class SocraticTutor(Agent):
         # Configure Gemini client
         self.client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
         self.conversation_history: list[dict] = []
+        self.room = None  # set when session starts
 
     async def on_user_turn_completed(
         self, turn_ctx: agents.ChatContext, new_message: agents.ChatMessage
     ) -> None:
-        """Called when the user finishes speaking."""
         user_text = new_message.text_content if hasattr(new_message, "text_content") else (new_message.content if hasattr(new_message, "content") else None)
         if not user_text:
             return
 
-        # Get response from Gemini
+        # Gemini's response
         response = await self._get_gemini_response(user_text)
 
-        # Queue the response for TTS - use session.say() (provided by Agent base class)
+        # TTS
         await self.session.say(response)
 
     async def _get_gemini_response(self, user_message: str) -> str:
-        """Get a Socratic response from Gemini."""
         try:
             # Add user message to history
             self.conversation_history.append({"role": "user", "parts": [{"text": user_message}]})
+
+            # Stream the user message to the frontend
+            if self.room:
+                try:
+                    transcript_data = json.dumps({
+                        "type": "transcript",
+                        "speaker": "user",
+                        "text": user_message,
+                    })
+                    await self.room.local_participant.publish_data(
+                        transcript_data.encode('utf-8'),
+                        topic="transcripts"
+                    )
+                except Exception as e:
+                    print(f"Error sending user transcript: {e}")
             
             # Build contents with system instruction and history
             contents = [{"role": "user", "parts": [{"text": SYSTEM_PROMPT}]}] + self.conversation_history
             
-            # Use async API call with faster model (lite version for real-time voice)
+            # Use async API call with faster model
             response = await self.client.aio.models.generate_content(
-                model="gemini-2.5-flash-lite",
+                model="gemini-2.5-flash-lite", # lite, faster model
                 contents=contents,
             )
             
             assistant_text = response.text
             # Add assistant response to history
             self.conversation_history.append({"role": "model", "parts": [{"text": assistant_text}]})
+
+            # Stream the assistant response to the frontend
+            if self.room:
+                try:
+                    transcript_data = json.dumps({
+                        "type": "transcript",
+                        "speaker": "AI",
+                        "text": assistant_text,
+                    })
+                    await self.room.local_participant.publish_data(
+                        transcript_data.encode('utf-8'),
+                        topic="transcripts"
+                    )
+                except Exception as e:
+                    print(f"Error sending assistant transcript: {e}")
             
             return assistant_text
+
         except Exception as e:
             print(f"Error getting Gemini response: {e}")
             return "I'm having trouble thinking right now. Could you repeat what you said?"
 
 
 async def entrypoint(ctx: agents.JobContext):
-    """Main entrypoint for the agent."""
     # Wait for a participant to connect
     await ctx.connect()
 
@@ -89,16 +120,19 @@ async def entrypoint(ctx: agents.JobContext):
     # Create the agent session with voice pipeline
     session = AgentSession(
         stt=deepgram.STT(
-            model="nova-2-general",
+            model="nova-2-general", # general, faster model
             language="en",
         ),
         tts=cartesia.TTS(
-            model="sonic-2",
+            model="sonic-2", # sonic-2, faster model
             voice="a0e99841-438c-4a64-b679-ae501e7d6091",  # barbershop voice
         ),
         vad=silero.VAD.load(),
     )
 
+    # Store room reference in the agent
+    tutor.room = ctx.room
+    
     # Start the session
     await session.start(
         room=ctx.room,
@@ -108,6 +142,7 @@ async def entrypoint(ctx: agents.JobContext):
             audio_enabled=True,
         ),
     )
+
 
 
 if __name__ == "__main__":

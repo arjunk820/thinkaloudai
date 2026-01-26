@@ -108,7 +108,9 @@ function RoomContent({ onDisconnect }: { onDisconnect: () => void }) {
     try {
       const text = new TextDecoder().decode(msg.payload);
       const data = JSON.parse(text);
+      console.log("Received data channel message:", data);
       if (data.type === "transcript") {
+        console.log("Adding transcript:", data.speaker, data.text);
         setTranscripts((prev) => [
           ...prev,
           {
@@ -119,7 +121,7 @@ function RoomContent({ onDisconnect }: { onDisconnect: () => void }) {
         ]);
       }
     } catch (e) {
-      // Not JSON data, ignore
+      console.error("Error parsing data channel message:", e);
     }
   }, []);
 

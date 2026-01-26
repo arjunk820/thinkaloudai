@@ -7,7 +7,7 @@ A voice-first learning companion that listens to students explain their reasonin
 - **Frontend**: Next.js 14 + React 18 + Tailwind CSS
 - **Agent**: Python with LiveKit Agents SDK v1.x
 - **Speech-to-Text**: Deepgram
-- **LLM**: Google Gemini 2.0 Flash
+- **LLM**: Google Gemini 2.5 Flash
 - **Text-to-Speech**: Cartesia
 
 ## Prerequisites
@@ -15,10 +15,10 @@ A voice-first learning companion that listens to students explain their reasonin
 - Node.js 18+ and pnpm
 - Python 3.9–3.13 (3.14 not supported yet)
 - API keys for:
-  - [LiveKit Cloud](https://cloud.livekit.io/) (LIVEKIT_URL, API_KEY, API_SECRET)
-  - [Google AI Studio](https://aistudio.google.com/) (GOOGLE_API_KEY)
-  - [Deepgram](https://deepgram.com/) (DEEPGRAM_API_KEY)
-  - [Cartesia](https://cartesia.ai/) (CARTESIA_API_KEY)
+  - [LiveKit Cloud](https://cloud.livekit.io/)
+  - [Google AI Studio](https://aistudio.google.com/)
+  - [Deepgram](https://deepgram.com/)
+  - [Cartesia](https://cartesia.ai/)
 
 ## Setup
 
@@ -30,7 +30,7 @@ Copy `.env.example` to `.env` and fill in your API keys:
 cp .env.example .env
 ```
 
-Required variables:
+Enter the API secrets:
 ```
 LIVEKIT_URL=wss://your-project.livekit.cloud
 LIVEKIT_API_KEY=your-api-key
@@ -46,13 +46,13 @@ CARTESIA_API_KEY=your-cartesia-key
 # Install dependencies (from project root)
 pnpm install
 
-# Run development server
+# Run dev server
 pnpm dev
 ```
 
-The frontend will be available at http://localhost:3000
+The server (frontend) will be available at http://localhost:3000
 
-### 3. Agent Setup
+### 3. Agent Setup (Backend)
 
 ```bash
 # Navigate to agent directory
@@ -68,7 +68,7 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
 # Run the agent
-python main.py dev
+python3 main.py dev
 ```
 
 ## Usage
@@ -78,7 +78,7 @@ python main.py dev
 3. Click "Start Learning Session"
 4. Allow microphone access when prompted
 5. Wait for the AI tutor to connect
-6. Start explaining your reasoning out loud!
+6. Start speaking
 
 ## How It Works
 
