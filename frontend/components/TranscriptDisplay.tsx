@@ -47,6 +47,7 @@ export function TranscriptDisplay({ transcripts }: TranscriptDisplayProps) {
           <span className="text-xs text-gray-500 mb-1">
             {transcript.speaker === "user" ? "You" : "AI Tutor"}
           </span>
+          <p> {transcript.timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} </p>
           <div
             className={`max-w-[80%] px-4 py-2 rounded-2xl ${
               transcript.speaker === "user"

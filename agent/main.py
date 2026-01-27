@@ -7,6 +7,7 @@ from livekit.plugins import deepgram, cartesia, silero  # pyright: ignore[report
 from google import genai
 
 import json
+import time
 
 # Load environment variables from .env file in project root
 load_dotenv(dotenv_path="../.env")
@@ -67,6 +68,7 @@ class SocraticTutor(Agent):
                         "type": "transcript",
                         "speaker": "user",
                         "text": user_message,
+                        "timestamp": time.time(), # timestamp of the user message
                     })
                     await self.room.local_participant.publish_data(
                         transcript_data.encode('utf-8'),
@@ -95,6 +97,7 @@ class SocraticTutor(Agent):
                         "type": "transcript",
                         "speaker": "AI",
                         "text": assistant_text,
+                        "timestamp": time.time(), # timestamp of the response
                     })
                     await self.room.local_participant.publish_data(
                         transcript_data.encode('utf-8'),
